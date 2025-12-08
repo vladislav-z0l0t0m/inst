@@ -11,10 +11,13 @@ import {
   ApiOkResponse,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
+  ApiCreatedResponse,
+  ApiConflictResponse,
 } from '@nestjs/swagger';
 import { UserResponseDto } from '../user/dto/user-response.dto';
 import { AuthenticateUserDto } from '../user/dto/authenticate-user.dto';
 import { OAuthLoginDto } from '../user/dto/oauth-login.dto';
+import { RegisterUserDto } from '../user/dto/register-user.dto';
 import { UserService } from '../user/user.service';
 import { InternalAuthGuard } from './internal-auth.guard';
 
@@ -23,6 +26,20 @@ import { InternalAuthGuard } from './internal-auth.guard';
 @UseGuards(InternalAuthGuard)
 export class InternalAuthController {
   constructor(private readonly userService: UserService) {}
+
+  @Post('register')
+  @ApiCreatedResponse({
+    description: 'User registered successfully',
+    type: UserResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Validation error' })
+  @ApiConflictResponse({ description: 'User already exists' })
+  @HttpCode(HttpStatus.CREATED)
+  async registerUser(
+    @Body() registerUserDto: RegisterUserDto,
+  ): Promise<UserResponseDto> {
+    return this.userService.create(registerUserDto);
+  }
 
   @Post('authenticate')
   @ApiOkResponse({

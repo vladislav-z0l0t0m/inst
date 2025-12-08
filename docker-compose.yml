@@ -83,6 +83,7 @@ services:
       FACEBOOK_CALLBACK_URL: ${FACEBOOK_CALLBACK_URL}
       NODE_ENV: ${NODE_ENV}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      FRONTEND_URL: ${FRONTEND_URL}
     command: npm run start:dev
     volumes:
       - ../inst-auth:/app
