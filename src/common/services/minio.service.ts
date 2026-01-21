@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'minio';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,7 +8,7 @@ import { getFileExtension } from '../utils/file.utils';
 import { UploadResult } from '../models/upload-result.model';
 
 @Injectable()
-export class MinioService implements OnModuleInit {
+export class MinioService {
   private readonly minioClient: Client;
   private readonly logger = new Logger(MinioService.name);
 
@@ -20,16 +20,6 @@ export class MinioService implements OnModuleInit {
       accessKey: this.configService.get<string>('MINIO_ACCESS_KEY'),
       secretKey: this.configService.get<string>('MINIO_SECRET_KEY'),
     });
-  }
-
-  async onModuleInit(): Promise<void> {
-    for (const bucket of Object.values(MINIO_CONSTANTS.BUCKETS)) {
-      const exists = await this.minioClient.bucketExists(bucket);
-      if (!exists) {
-        await this.minioClient.makeBucket(bucket);
-        this.logger.log(`Bucket created: ${bucket}`);
-      }
-    }
   }
 
   async uploadFile(
@@ -108,18 +98,17 @@ export class MinioService implements OnModuleInit {
   }
 
   getFileUrl(bucketName: BucketType, objectName: string): string {
-    const protocol =
-      this.configService.get<string>('MINIO_USE_SSL') === 'true'
-        ? 'https'
-        : 'http';
-    const endpoint = this.configService.get<string>('MINIO_ENDPOINT');
-    const port = this.configService.get<number>('MINIO_PORT');
-    return `${protocol}://${endpoint}:${port}/${bucketName}/${objectName}`;
+    const publicFileUrl = this.configService.get<string>('PUBLIC_FILE_URL');
+    return `${publicFileUrl}/${bucketName}/${objectName}`;
   }
 
   private getObjectNameFromUrl(fileUrl: string): string {
     const url = new URL(fileUrl);
-    const pathParts = url.pathname.split('/');
-    return pathParts.slice(2).join('/');
+    const pathParts = url.pathname.split('/').filter(Boolean);
+
+    if (pathParts[0] === 'files') {
+      return pathParts.slice(2).join('/');
+    }
+    return pathParts.slice(1).join('/');
   }
 }
