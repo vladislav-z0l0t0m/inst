@@ -9,6 +9,7 @@ import {
   Post,
   Get,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -24,7 +25,6 @@ import {
 import { ParamsIdDto } from 'src/common/dto/params-id.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { CommentsService } from './comments.service';
-import { Auth } from '../common/decorators/auth.decorator';
 import { AuthUser } from '../common/decorators/current-user.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ReactionsService } from '../reactions/reactions.service';
@@ -35,9 +35,12 @@ import { CommentResponseDto } from './dto/comment-response.dto';
 
 import { CursorPaginatedCommentsResponseDto } from './dto/cursor-paginated-comments.dto';
 import { CursorPaginationDto } from 'src/common/dto/cursor-pagination.dto';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @ApiTags('Comments')
 @ApiInternalServerErrorResponse({ description: 'Internal server error' })
+@UseGuards(JwtAuthGuard)
 @Controller('comments')
 export class CommentsController {
   constructor(
@@ -52,7 +55,7 @@ export class CommentsController {
   @ApiOkResponse({ description: 'Comment returned', type: CommentResponseDto })
   @ApiNotFoundResponse({ description: 'Comment not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Comment ID' })
-  @Auth()
+  @Public()
   @Get(':id')
   async getComment(
     @Param() { id: commentId }: ParamsIdDto,
@@ -71,7 +74,7 @@ export class CommentsController {
   })
   @ApiNotFoundResponse({ description: 'Comment not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Comment ID' })
-  @Auth()
+  @Public()
   @Get(':id/replies')
   async getCommentsReplies(
     @Param() { id: commentId }: ParamsIdDto,
@@ -95,7 +98,6 @@ export class CommentsController {
     description: 'Forbidden - you are not the author of this comment',
   })
   @ApiParam({ name: 'id', type: Number, description: 'Comment ID' })
-  @Auth()
   @Patch(':id')
   async updateComment(
     @Param() { id: commentId }: ParamsIdDto,
@@ -115,7 +117,6 @@ export class CommentsController {
     description: 'Comment not found or not yours to delete',
   })
   @ApiParam({ name: 'id', type: Number, description: 'Comment ID' })
-  @Auth()
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteComment(
@@ -133,7 +134,6 @@ export class CommentsController {
   @ApiOkResponse({ description: 'Reaction updated', type: ReactionResponseDto })
   @ApiNotFoundResponse({ description: 'Comment not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Comment ID' })
-  @Auth()
   @HttpCode(HttpStatus.OK)
   @Post(':id/like')
   async like(
@@ -156,7 +156,6 @@ export class CommentsController {
   @ApiOkResponse({ description: 'Reaction updated', type: ReactionResponseDto })
   @ApiNotFoundResponse({ description: 'Comment not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Comment ID' })
-  @Auth()
   @HttpCode(HttpStatus.OK)
   @Post(':id/dislike')
   async dislike(
@@ -179,7 +178,6 @@ export class CommentsController {
   @ApiOkResponse({ description: 'Reaction updated', type: ReactionResponseDto })
   @ApiNotFoundResponse({ description: 'Comment not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Comment ID' })
-  @Auth()
   @HttpCode(HttpStatus.OK)
   @Post(':id/reactions')
   async setReaction(

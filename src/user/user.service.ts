@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { Not, Repository } from 'typeorm';
@@ -31,7 +32,9 @@ export class UserService {
     private readonly authApiService: AuthApiService,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+  async create(
+    createUserDto: CreateUserDto | RegisterUserDto,
+  ): Promise<UserResponseDto> {
     const { email, phone, username, password } = createUserDto;
     const hashedPassword = await this.hashingService.hash(password);
 

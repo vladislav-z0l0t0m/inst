@@ -4,6 +4,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,18 +15,18 @@ import {
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
-import { Auth } from 'src/common/decorators/auth.decorator';
 import { UserResponseDto } from 'src/user/dto/user-response.dto';
 import { ParamsIdDto } from 'src/common/dto/params-id.dto';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
 @ApiTags('Admin')
 @ApiInternalServerErrorResponse({ description: 'Internal server error' })
+@UseGuards(JwtAuthGuard)
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Delete('users/all')
-  @Auth()
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'All users deleted',
@@ -35,7 +36,6 @@ export class AdminController {
   }
 
   @Delete('users/:id')
-  @Auth()
   @ApiParam({ name: 'id', type: Number, description: 'User ID' })
   @ApiOkResponse({
     description: 'User deleted',

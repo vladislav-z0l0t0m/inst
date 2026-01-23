@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -24,18 +25,21 @@ import {
 } from '@nestjs/swagger';
 import { UserResponseDto } from './dto/user-response.dto';
 import { SetPasswordDto } from './dto/set-password.dto';
-import { Auth } from 'src/common/decorators/auth.decorator';
 import {
   CurrentUser,
   AuthUser,
 } from 'src/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @ApiTags('Users')
 @ApiInternalServerErrorResponse({ description: 'Internal server error' })
+@UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Public()
   @Post()
   @ApiCreatedResponse({
     description: 'User created.',
@@ -46,6 +50,7 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
+  @Public()
   @Get()
   @ApiOkResponse({
     description: 'Users returned',
@@ -56,7 +61,6 @@ export class UserController {
   }
 
   @Get('me')
-  @Auth()
   @ApiOkResponse({
     description: 'Current user returned',
     type: UserResponseDto,
@@ -67,7 +71,6 @@ export class UserController {
   }
 
   @Patch('me')
-  @Auth()
   @ApiOkResponse({
     description: 'Current user updated',
     type: UserResponseDto,
@@ -82,7 +85,6 @@ export class UserController {
   }
 
   @Patch('me/password')
-  @Auth()
   @ApiOkResponse({
     description: 'Current user password updated',
   })
@@ -97,7 +99,6 @@ export class UserController {
   }
 
   @Patch('me/password/set')
-  @Auth()
   @ApiOkResponse({
     description: 'Current user password setted',
   })
@@ -112,7 +113,6 @@ export class UserController {
   }
 
   @Delete('me')
-  @Auth()
   @ApiOkResponse({
     description: 'Current user deleted',
     type: UserResponseDto,
@@ -122,7 +122,7 @@ export class UserController {
   removeCurrentUser(@CurrentUser() user: AuthUser): Promise<UserResponseDto> {
     return this.userService.remove(user.userId);
   }
-
+  @Public()
   @Get(':id')
   @ApiParam({ name: 'id', type: Number, description: 'User ID' })
   @ApiOkResponse({

@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -29,7 +30,6 @@ import {
 } from '@nestjs/swagger';
 import { PostResponseDto } from './dto/post-response.dto';
 import { ParamsIdDto } from '../common/dto/params-id.dto';
-import { Auth } from 'src/common/decorators/auth.decorator';
 import {
   CurrentUser,
   AuthUser,
@@ -54,12 +54,15 @@ import {
 } from '../common/dto/upload-files-response.dto';
 import { FileService } from '../common/services/file.service';
 import { ERROR_MESSAGES } from '../common/constants/error-messages.constants';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @ApiTags('Posts')
 @ApiResponse({
   status: HttpStatus.INTERNAL_SERVER_ERROR,
   description: 'Internal server error',
 })
+@UseGuards(JwtAuthGuard)
 @Controller('posts')
 export class PostsController {
   constructor(
@@ -78,7 +81,6 @@ export class PostsController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Validation error',
   })
-  @Auth()
   @Post()
   create(
     @Body() createPostDto: CreatePostDto,
@@ -97,7 +99,6 @@ export class PostsController {
   })
   @ApiNotFoundResponse({ description: 'Post not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Post ID' })
-  @Auth()
   @HttpCode(HttpStatus.OK)
   @Post(':id/like')
   async like(
@@ -123,7 +124,6 @@ export class PostsController {
   })
   @ApiNotFoundResponse({ description: 'Post not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Post ID' })
-  @Auth()
   @HttpCode(HttpStatus.OK)
   @Post(':id/dislike')
   async dislike(
@@ -149,7 +149,6 @@ export class PostsController {
   })
   @ApiNotFoundResponse({ description: 'Post not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Post ID' })
-  @Auth()
   @HttpCode(HttpStatus.OK)
   @Post(':id/reactions')
   async setReaction(
@@ -171,7 +170,7 @@ export class PostsController {
       'Return array of all posts. Authenticated users will see their reactions.',
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Posts returned' })
-  @Auth()
+  @Public()
   @Get()
   findAll(
     @Query() paginationDto: CursorPaginationDto,
@@ -188,7 +187,7 @@ export class PostsController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Post returned' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Post ID' })
-  @Auth()
+  @Public()
   @Get(':id')
   findOne(
     @Param() { id }: ParamsIdDto,
@@ -204,7 +203,6 @@ export class PostsController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Post updated' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Post ID' })
-  @Auth()
   @Patch(':id')
   update(
     @Param() { id }: ParamsIdDto,
@@ -221,7 +219,6 @@ export class PostsController {
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Post deleted' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post not found' })
   @ApiParam({ name: 'id', type: Number, description: 'Post ID' })
-  @Auth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   remove(
@@ -241,7 +238,6 @@ export class PostsController {
     description: 'Created comment',
   })
   @ApiParam({ name: 'id', type: Number, description: 'Post ID' })
-  @Auth()
   @Post(':id/comments')
   async createComment(
     @Param() { id: postId }: ParamsIdDto,
@@ -262,7 +258,7 @@ export class PostsController {
     description: 'List of comments',
   })
   @ApiParam({ name: 'id', type: Number, description: 'Post ID' })
-  @Auth()
+  @Public()
   @Get(':id/comments')
   async getPostComments(
     @Param() { id: postId }: ParamsIdDto,
@@ -287,7 +283,6 @@ export class PostsController {
     description: 'Invalid file type or file size exceeds limit',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized - JWT token required' })
-  @Auth()
   @Post(':id/images')
   @UseInterceptors(
     FilesInterceptor('files', MINIO_CONSTANTS.FILE_LIMITS.MAX_FILES),
